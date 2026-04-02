@@ -30,13 +30,19 @@ class Process implements Runnable {
     private int timeQuantum; // Time slice (time quantum) allowed per CPU access (in milliseconds)
     private int remainingTime; // Time left for the process to finish its execution
     private int priority;
+    private long creationTime;
+    private long totalWaitingTime;
+    private long lastFinishedTime;
     // Constructor to initialize the process with name, burst time, and time quantum
-    public Process(String name, int burstTime, int timeQuantum, int prioirty) {
+    public Process(String name, int burstTime, int timeQuantum, int prioirty,long creationTime, long totalWaitingTime, lastFinishedTime) {
         this.name = name;
         this.burstTime = burstTime;
         this.timeQuantum = timeQuantum;
         this.remainingTime = burstTime; // Initially, remaining time is equal to the burst time
         this.priority = priority;
+        this.creationTime = System.currentTimeMillis();
+        this.lastFinishedTime = this.creationTime;
+        this.totalWaitingTime = 0;
     }
 
     // This method will be called when the thread for this process is started
@@ -150,6 +156,7 @@ public class SchedulerSimulation {
         // This makes your output unique to you - DO NOT forget to change this!
         int studentID = 444052901;  // ← CHANGE THIS TO YOUR ACTUAL STUDENT ID
         static int contextSwitchCount = 0;
+        List<Process> finishedProcesses = new ArrayList<>();
         Random random = new Random(studentID);
         
         // Define the time quantum in milliseconds (the maximum time a process gets in one round)
@@ -218,6 +225,8 @@ public class SchedulerSimulation {
         
         // Loop to manage the scheduling of processes
         while (!processQueue.isEmpty()) {
+            long currentWait = System.currentTimeMillis() - process.lastFinishedTime;
+            process.totalWaitingTime += currentWait;
             // Get the next thread from the queue (FIFO)
             Thread currentThread = processQueue.poll(); // Dequeues the next thread
             currentThread.start();
@@ -245,6 +254,7 @@ public class SchedulerSimulation {
             try {
                 // Wait for the thread to finish its time quantum before continuing to the next process
                 currentThread.join();
+                process.lastFinishedTime = System.currentTimeMillis();
             } catch (InterruptedException e) {
                 System.out.println("Main thread interrupted.");
             }
@@ -254,6 +264,8 @@ public class SchedulerSimulation {
             
             // Check if the process is not finished
             if (!process.isFinished()) {
+                finishedProcess.add(process);
+                addProcessToQueue(process, processQueue, processMap)
                 // If the process still has remaining time, check if there are more processes in queue
                 if (!processQueue.isEmpty()) {
                     // Re-enqueue the process to give it another chance to run in the next round
@@ -264,9 +276,24 @@ public class SchedulerSimulation {
                                       Colors.RESET + Colors.YELLOW + " is the last process → running to completion" + 
                                       Colors.RESET);
                     process.runToCompletion(); // Run until the process completes
+                    process.lastFinishedTime = System.currentTimeMillis();
                 }
             }
         }
+        System.out.println("\n" + "=".repeat(50));
+        System.out.println("       PROCESS EXECUTION SUMMARY TABLE");
+        System.out.println("=".repeat(50));
+        System.out.printf("%-15s | %-15s | %-15s%n, "Process Name", "Burst Time", "Waitng Time");
+        System.out.println("-".repeat(50));
+
+        for (Process p : finidhedProcess) {
+            System.out.printf("%-15s | %-15d ms | %-15d ms%n",
+                              p.getName();
+                              p.getBurstTime();
+                              p.totalWaitingTime();
+        }
+        System.out.println("=".repeat(50));
+                                
         
         // End of the scheduler simulation
         System.out.println(Colors.BOLD + Colors.BRIGHT_GREEN + 
